@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.43"
-toml = "0.5"
-clap = "2.33"
-home = "0.5"
-heck = "0.3"
+toml = "0.5.8"
+clap = "2.33.3"
+home = "0.5.3"
+heck = "0.3.3"
