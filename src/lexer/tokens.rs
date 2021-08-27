@@ -30,7 +30,7 @@ pub enum TokenKind {
     Has,
     Hidden,
     If,
-    Instanceof,
+    InstanceOf,
     Import,
     Me,
     Module,
@@ -41,7 +41,7 @@ pub enum TokenKind {
     /// I just added a random character at the
     /// end so the compiler won't complain
     /// because of Self keyword usage
-    SelfT,
+    SelfK,
     Static,
     Switch,
     Throw,
@@ -60,7 +60,6 @@ pub enum TokenKind {
     Bang,
     Tilde,
     Identifier,
-    Whitespace,
     Semicolon,
     Comma,
     /// This one: {
