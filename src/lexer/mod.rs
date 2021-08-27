@@ -23,16 +23,36 @@ impl MonkeyCLexer {
             let c = self.current_char();
 
             match c {
+                '{' => {
+                    tokens.push(Token::new(OpeningBracket, c.to_string()));
+                    self.currently_at += 1;
+                }
+                '}' => {
+                    tokens.push(Token::new(ClosingBracket, c.to_string()));
+                    self.currently_at += 1;
+                }
+                '(' => {
+                    tokens.push(Token::new(OpeningBrace, c.to_string()));
+                    self.currently_at += 1;
+                }
+                ')' => {
+                    tokens.push(Token::new(ClosingBrace, c.to_string()));
+                    self.currently_at += 1;
+                }
+                '~' => {
+                    tokens.push(Token::new(Tilde, c.to_string()));
+                    self.currently_at += 1;
+                }
                 '=' => {
-                    tokens.push(Token::new(TokenKind::Assign, "=".to_owned()));
+                    tokens.push(Token::new(TokenKind::Assign, c.to_string()));
                     self.currently_at += 1;
                 }
                 ';' => {
-                    tokens.push(Token::new(TokenKind::Semicolon, ";".to_owned()));
+                    tokens.push(Token::new(TokenKind::Semicolon, c.to_string()));
                     self.currently_at += 1;
                 }
                 '!' => {
-                    tokens.push(Token::new(TokenKind::Bang, "!".to_string()));
+                    tokens.push(Token::new(TokenKind::Bang, c.to_string()));
                     self.currently_at += 1;
                 }
                 _ if c.is_alphabetic() => {
@@ -71,6 +91,7 @@ impl MonkeyCLexer {
                         "import" => Import,
                         "me" => Me,
                         "module" => Module,
+                        "new" => New,
                         "private" => Private,
                         "protected" => Protected,
                         "public" => Public,

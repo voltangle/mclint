@@ -73,27 +73,27 @@ pub enum TokenKind {
 }
 
 // Operator	Description
-// new	creation
-// !	logical NOT
-// ~	bitwise NOT
-// ( )	function invocation
-// *	multiplication
-// /	division
-// %	modulo
-// &	bitwise AND
-// <<	left shift
-// >>	right shift
-// +	addition
-// -	subtraction
-// |	bitwise OR
-// ^	bitwise XOR
-// <	less than
-// <=	less than or equals
-// >	greater than
-// >=	greater than or equals
-// ==	equals
-// !=	not equals
-// &&	logical AND
+// new	    creation
+// !	    logical NOT
+// ~	    bitwise NOT
+// ( )	    function invocation
+// *	    multiplication
+// /	    division
+// %	    modulo
+// &	    bitwise AND
+// <<	    left shift
+// >>	    right shift
+// +	    addition
+// -	    subtraction
+// |	    bitwise OR
+// ^	    bitwise XOR
+// <	    less than
+// <=	    less than or equals
+// >	    greater than
+// >=	    greater than or equals
+// ==	    equals
+// !=	    not equals
+// &&	    logical AND
 // and
-// ||	logical OR
+// ||	    logical OR
 // or
