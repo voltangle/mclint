@@ -1,5 +1,5 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use crate::lexer::tokens::TokenKind::Char;
+use crate::lexer::tokens::TokenKind::*;
 
 pub mod tokens;
 
@@ -47,14 +47,43 @@ impl MonkeyCLexer {
                         self.currently_at += 1;
                     }
 
-                    // Then checking for keywords. If is not a keyword, then it is an identifier
+                    // Then matching for keywords. If is not a keyword, then it's an identifier
                     let kind: TokenKind = match buffer.as_str() {
-                        "as" => TokenKind::As,
-                        "break" => TokenKind::Break,
-                        "case" => TokenKind::Case,
-                        "catch" => TokenKind::Catch,
-                        "var" => TokenKind::Var,
-                        _ => TokenKind::Identifier,
+                        "as" => As,
+                        "break" => Break,
+                        "case" => Case,
+                        "catch" => Catch,
+                        "class" => Class,
+                        "const" => Const,
+                        "continue" => Continue,
+                        "default" => Default,
+                        "do" => Do,
+                        "else" => Else,
+                        "enum" => Enum,
+                        "extends" => Extends,
+                        "finally" => Finally,
+                        "for" => For,
+                        "function" => Function,
+                        "has" => Has,
+                        "hidden" => Hidden,
+                        "if" => If,
+                        "instanceof" => InstanceOf,
+                        "import" => Import,
+                        "me" => Me,
+                        "module" => Module,
+                        "private" => Private,
+                        "protected" => Protected,
+                        "public" => Public,
+                        "return" => Return,
+                        "self" => SelfK,
+                        "static" => Static,
+                        "switch" => Switch,
+                        "throw" => Throw,
+                        "try" => Try,
+                        "using" => Using,
+                        "var" => Var,
+                        "while" => While,
+                        _ => Identifier,
                     };
                     tokens.push(Token::new(kind, buffer))
                 }
