@@ -1,4 +1,5 @@
 use crate::lexer::tokens::{Token, TokenKind};
+use crate::lexer::tokens::TokenKind::Char;
 
 pub mod tokens;
 
@@ -56,6 +57,11 @@ impl MonkeyCLexer {
                         _ => TokenKind::Identifier,
                     };
                     tokens.push(Token::new(kind, buffer))
+                }
+                '\'' => {
+                    self.currently_at += 1;
+                    tokens.push(Token::new(TokenKind::Char, self.current_char().to_string()));
+                    self.currently_at += 2;
                 }
                 '\"' => {
                     self.currently_at += 1;
