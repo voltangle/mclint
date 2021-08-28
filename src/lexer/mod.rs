@@ -1,4 +1,7 @@
 use crate::lexer::tokens::{Token, TokenKind};
+use anyhow::Result;
+use anyhow::bail;
+
 
 pub mod tokens;
 
@@ -6,6 +9,8 @@ pub mod tokens;
 pub struct MonkeyCLexer {
     source: Vec<char>,
     currently_at: usize,
+    current_column: u64,
+    current_row: u64
 }
 
 impl MonkeyCLexer {
@@ -13,89 +18,122 @@ impl MonkeyCLexer {
         Self {
             source,
             currently_at: 0,
+            current_column: 1,
+            current_row: 1
         }
     }
 
-    pub fn lex(&mut self) {
+    fn next(&mut self) {
+        self.currently_at += 1;
+        self.current_column += 1;
+    }
+
+    pub fn lex(&mut self) -> Result<Vec<Token>> {
         let mut tokens: Vec<Token> = Vec::new();
         while self.source.len() > self.currently_at {
             let c = self.current_char();
 
             match c {
+                '\n' => {
+                    self.current_row += 1;
+                    self.current_column = 1;
+                    self.currently_at += 1;
+                }
                 '{' => {
                     tokens.push(Token::new(TokenKind::OpeningBracket, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '}' => {
                     tokens.push(Token::new(TokenKind::ClosingBracket, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '(' => {
                     tokens.push(Token::new(TokenKind::OpeningBrace, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 ')' => {
                     tokens.push(Token::new(TokenKind::ClosingBrace, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '~' => {
                     tokens.push(Token::new(TokenKind::Tilde, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '=' => {
                     tokens.push(Token::new(TokenKind::Assign, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '-' => {
                     tokens.push(Token::new(TokenKind::Minus, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '+' => {
                     tokens.push(Token::new(TokenKind::Plus, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '/' => {
                     tokens.push(Token::new(TokenKind::Slash, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 ',' => {
                     tokens.push(Token::new(TokenKind::Comma, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 ';' => {
                     tokens.push(Token::new(TokenKind::Semicolon, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 '!' => {
                     tokens.push(Token::new(TokenKind::Bang, c.to_string()));
-                    self.currently_at += 1;
+                    self.next();
+                }
+                '^' => {
+                    tokens.push(Token::new(TokenKind::Caret, c.to_string()));
+                    self.next();
+                }
+                '>' => {
+                    tokens.push(Token::new(TokenKind::GreaterThan, c.to_string()));
+                    self.next();
+                }
+                '<' => {
+                    tokens.push(Token::new(TokenKind::LessThan, c.to_string()));
+                    self.next();
+                }
+                '&' => {
+                    tokens.push(Token::new(TokenKind::Ampersand, c.to_string()));
+                    self.next();
+                }
+                '|' => {
+                    tokens.push(Token::new(TokenKind::VerticalBar, c.to_string()));
+                    self.next();
                 }
                 '\'' => {
-                    self.currently_at += 1;
+                    self.next();
                     tokens.push(Token::new(TokenKind::Char, self.current_char().to_string()));
                     self.currently_at += 2;
+                    self.current_column += 2;
                 }
                 '\"' => {
-                    self.currently_at += 1;
+                    self.next();
                     let mut buffer: String = String::new();
                     while self.current_char() != '\"' {
                         buffer.push(self.current_char());
-                        self.currently_at += 1;
+                        self.next();
                     }
                     tokens.push(Token::new(TokenKind::String, buffer));
-                    self.currently_at += 1;
+                    self.next();
                 }
                 _ => {
                     if c.is_alphabetic() {
                         // Creating a buffer and writing a first character to it
                         let mut buffer = String::new();
                         buffer.push(c);
-                        self.currently_at += 1;
+                        self.next();
 
                         // Writing everything that is alphabetic to the buffer
                         while self.current_char().is_alphabetic() {
                             buffer.push(self.current_char());
-                            self.currently_at += 1;
+                            self.next();
                         }
 
                         // Then matching for reserved words. If it's not reserved, then it's an identifier
@@ -147,6 +185,7 @@ impl MonkeyCLexer {
                         let mut buffer = String::new();
                         buffer.push(c);
                         let mut token_type = TokenKind::Int;
+                        let mut got_alphabetic = false;
 
                         // Writing everything that is numeric or ./l/d to the buffer
                         while self.current_char().is_alphanumeric() || self.current_char() == '.' || self.current_char() == 'l' || self.current_char() == 'd' {
@@ -155,24 +194,40 @@ impl MonkeyCLexer {
                                     token_type = TokenKind::Float;
                                 }
                                 'l' => {
+                                    if got_alphabetic == false {
+                                        if token_type == TokenKind::Float {
+                                            bail!(format!("Bad token at {}:{}: A Float can't have 'l' at the end", self.current_row, self.current_column));
+                                        }
+                                    } else {
+                                        bail!(format!("Bad token at {}:{}: You can't have multiple number decorators", self.current_row, self.current_column));
+                                    }
+                                    got_alphabetic = true;
                                     token_type = TokenKind::Long;
                                 }
                                 'd' => {
+                                    if got_alphabetic == false {
+                                        if token_type == TokenKind::Float {
+                                            bail!(format!("Bad token at {}:{}: A Float can't have 'd' at the end", self.current_row, self.current_column));
+                                        }
+                                    } else {
+                                        bail!(format!("Bad token at {}:{}: Multiple number decorators are forbidden", self.current_row, self.current_column));
+                                    }
+                                    got_alphabetic = true;
                                     token_type = TokenKind::Double;
                                 }
                                 _ => {}
                             }
                             buffer.push(self.current_char());
-                            self.currently_at += 1;
+                            self.next();
                         }
                         tokens.push(Token::new(token_type, buffer));
                     } else {
-                        self.currently_at += 1;
+                        self.next();
                     }
                 }
             }
         }
-        println!("{:?}", tokens)
+        Ok(tokens)
     }
 
     fn current_char(&self) -> char {
