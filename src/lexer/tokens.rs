@@ -52,13 +52,13 @@ pub enum TokenKind {
     Bool,
     String,
     Int,
+    Long,
+    Float,
+    Double,
     Null,
     Char,
     Nan,
     New,
-    Assign,
-    Bang,
-    Tilde,
     Identifier,
     Semicolon,
     Comma,
@@ -70,10 +70,19 @@ pub enum TokenKind {
     OpeningBrace,
     /// This one: )
     ClosingBrace,
+    Asterisk,
+    Percent,
+    Assign,
+    Bang,
+    Tilde,
+    Plus,
+    Minus,
+    Slash,
+    Ampersand,
+
 }
 
 // Operator	Description
-// new	    creation
 // !	    logical NOT
 // ~	    bitwise NOT
 // ( )	    function invocation
