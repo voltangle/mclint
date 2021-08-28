@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         .with_context(|| format!("Failed to read contents of {}", file_path.display()))?;
 
     let mut lexer = MonkeyCLexer::new(file_contents.chars().collect());
-    lexer.lex().with_context(|| format!("Failed to tokenize {:?}", file_path))?;
+    println!("{:?}", lexer.lex().with_context(|| format!("Failed to tokenize {:?}", file_path))?);
 
     println!("{:?}", matches.value_of("INPUT"));
     Ok(())
