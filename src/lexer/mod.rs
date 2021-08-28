@@ -40,90 +40,94 @@ impl MonkeyCLexer {
                     self.currently_at += 1;
                 }
                 '{' => {
-                    tokens.push(Token::new(TokenKind::OpeningBracket, c.to_string()));
+                    tokens.push(Token::new(TokenKind::OpeningBracket, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '}' => {
-                    tokens.push(Token::new(TokenKind::ClosingBracket, c.to_string()));
+                    tokens.push(Token::new(TokenKind::ClosingBracket, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '(' => {
-                    tokens.push(Token::new(TokenKind::OpeningBrace, c.to_string()));
+                    tokens.push(Token::new(TokenKind::OpeningBrace, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 ')' => {
-                    tokens.push(Token::new(TokenKind::ClosingBrace, c.to_string()));
+                    tokens.push(Token::new(TokenKind::ClosingBrace, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '~' => {
-                    tokens.push(Token::new(TokenKind::Tilde, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Tilde, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '=' => {
-                    tokens.push(Token::new(TokenKind::Assign, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Assign, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '-' => {
-                    tokens.push(Token::new(TokenKind::Minus, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Minus, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '+' => {
-                    tokens.push(Token::new(TokenKind::Plus, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Plus, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '/' => {
-                    tokens.push(Token::new(TokenKind::Slash, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Slash, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 ',' => {
-                    tokens.push(Token::new(TokenKind::Comma, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Comma, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 ';' => {
-                    tokens.push(Token::new(TokenKind::Semicolon, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Semicolon, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '!' => {
-                    tokens.push(Token::new(TokenKind::Bang, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Bang, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '^' => {
-                    tokens.push(Token::new(TokenKind::Caret, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Caret, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '>' => {
-                    tokens.push(Token::new(TokenKind::GreaterThan, c.to_string()));
+                    tokens.push(Token::new(TokenKind::GreaterThan, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '<' => {
-                    tokens.push(Token::new(TokenKind::LessThan, c.to_string()));
+                    tokens.push(Token::new(TokenKind::LessThan, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '&' => {
-                    tokens.push(Token::new(TokenKind::Ampersand, c.to_string()));
+                    tokens.push(Token::new(TokenKind::Ampersand, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '|' => {
-                    tokens.push(Token::new(TokenKind::VerticalBar, c.to_string()));
+                    tokens.push(Token::new(TokenKind::VerticalBar, c.to_string(), self.current_row, self.current_column));
                     self.next();
                 }
                 '\'' => {
                     self.next();
-                    tokens.push(Token::new(TokenKind::Char, self.current_char().to_string()));
+                    tokens.push(Token::new(TokenKind::Char, self.current_char().to_string(), self.current_row, self.current_column));
                     self.currently_at += 2;
                     self.current_column += 2;
                 }
                 '\"' => {
+                    let row = self.current_row;
+                    let column = self.current_column;
                     self.next();
                     let mut buffer: String = String::new();
                     while self.current_char() != '\"' {
                         buffer.push(self.current_char());
                         self.next();
                     }
-                    tokens.push(Token::new(TokenKind::String, buffer));
+                    tokens.push(Token::new(TokenKind::String, buffer, row, column));
                     self.next();
                 }
                 _ => {
+                    let row = self.current_row;
+                    let column = self.current_column;
                     if c.is_alphabetic() {
                         // Creating a buffer and writing a first character to it
                         let mut buffer = String::new();
@@ -179,7 +183,7 @@ impl MonkeyCLexer {
                             "while" => TokenKind::While,
                             _ => TokenKind::Identifier,
                         };
-                        tokens.push(Token::new(kind, buffer))
+                        tokens.push(Token::new(kind, buffer, row, column))
                     } else if c.is_numeric() {
                         // Creating a buffer and writing a first character to it
                         let mut buffer = String::new();
@@ -220,7 +224,7 @@ impl MonkeyCLexer {
                             buffer.push(self.current_char());
                             self.next();
                         }
-                        tokens.push(Token::new(token_type, buffer));
+                        tokens.push(Token::new(token_type, buffer, row, column));
                     } else {
                         self.next();
                     }
