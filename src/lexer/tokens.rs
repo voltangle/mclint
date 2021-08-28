@@ -2,11 +2,13 @@
 pub struct Token {
     kind: TokenKind,
     literal: String,
+    row: u64,
+    column: u64
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, literal: String) -> Self {
-        Self { kind, literal }
+    pub fn new(kind: TokenKind, literal: String, row: u64, column: u64) -> Self {
+        Self { kind, literal, row, column }
     }
 }
 
