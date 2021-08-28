@@ -13,6 +13,7 @@ impl Token {
 #[derive(Debug)]
 pub enum TokenKind {
     As,
+    And,
     Break,
     Case,
     Catch,
@@ -37,6 +38,7 @@ pub enum TokenKind {
     Private,
     Protected,
     Public,
+    Or,
     Return,
     /// I just added a random character at the
     /// end so the compiler won't complain
@@ -78,31 +80,11 @@ pub enum TokenKind {
     Plus,
     Minus,
     Slash,
+    /// This one: &
     Ampersand,
-
+    LessThan,
+    GreaterThan,
+    /// This one: ^
+    Caret,
+    VerticalBar
 }
-
-// Operator	Description
-// !	    logical NOT
-// ~	    bitwise NOT
-// ( )	    function invocation
-// *	    multiplication
-// /	    division
-// %	    modulo
-// &	    bitwise AND
-// <<	    left shift
-// >>	    right shift
-// +	    addition
-// -	    subtraction
-// |	    bitwise OR
-// ^	    bitwise XOR
-// <	    less than
-// <=	    less than or equals
-// >	    greater than
-// >=	    greater than or equals
-// ==	    equals
-// !=	    not equals
-// &&	    logical AND
-// and
-// ||	    logical OR
-// or
