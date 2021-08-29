@@ -45,7 +45,7 @@ pub enum TokenKind {
     /// I just added a random character at the
     /// end so the compiler won't complain
     /// because of Self keyword usage
-    SelfK,
+    Self_,
     Static,
     Switch,
     Throw,

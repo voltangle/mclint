@@ -173,7 +173,7 @@ impl MonkeyCLexer {
                             "public" => TokenKind::Public,
                             "or" => TokenKind::Or,
                             "return" => TokenKind::Return,
-                            "self" => TokenKind::SelfK,
+                            "self" => TokenKind::Self_,
                             "static" => TokenKind::Static,
                             "switch" => TokenKind::Switch,
                             "throw" => TokenKind::Throw,
