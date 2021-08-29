@@ -23,17 +23,15 @@ jobs:
         run: rustup target add x86_64-pc-windows-gnu
       - name: Install MinGW
         run: brew install mingw-w64
-      - name: Install Linux target
-        run: |
-          rustup target add x86_64-unknown-linux-musl
-          brew tap filosottile/musl-cross
-          brew install musl-cross
+#      - name: Install Linux target
+#        run: |
+#          rustup target add x86_64-unknown-linux-musl
+#          brew tap filosottile/musl-cross
+#          brew install musl-cross
       - name: Release version for Windows
         run: cargo build --release --target x86_64-pc-windows-gnu
-      - name: Release version for Linux
-        run: cargo build --release --target x86_64-unknown-linux-musl
-      - name: Get package version
-        run: export PACKAGE_VER=`grep -E -m 1 '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?' Cargo.toml`
+#      - name: Release version for Linux
+#        run: cargo build --release --target x86_64-unknown-linux-musl
       - name: Rename build artifacts
         run: |
           mv target/release/mclint target/release/mclint-mac
@@ -53,7 +51,7 @@ jobs:
           files: |
             target/release/mclint-mac
             target/x86_64-pc-windows-gnu/release/mclint-win.exe
-            target/x86_64-unknown-linux-musl/release/mclint
+#            target/x86_64-unknown-linux-musl/release/mclint
 
   build-Windows:
     runs-on: windows-latest
