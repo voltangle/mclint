@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum MonkeyCStatements {
+pub enum MonkeyCStatement {
     VariableCreation {
         name: String,
         default_val: Expression
@@ -7,7 +7,7 @@ pub enum MonkeyCStatements {
     ClassDeclaration {
         name: String,
         extends: Option<String>,
-        children: Vec<MonkeyCStatements>
+        children: Vec<MonkeyCStatement>
     }
     // Others will be added in later
 }
