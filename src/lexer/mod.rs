@@ -109,7 +109,7 @@ impl MonkeyCLexer {
                 }
                 '\'' => {
                     self.next();
-                    tokens.push(Token::new(TokenKind::Char, self.current_char().to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(TokenKind::CharLiteral, self.current_char().to_string(), self.current_row, self.current_column));
                     self.currently_at += 2;
                     self.current_column += 2;
                 }
@@ -122,7 +122,7 @@ impl MonkeyCLexer {
                         buffer.push(self.current_char());
                         self.next();
                     }
-                    tokens.push(Token::new(TokenKind::String, buffer, row, column));
+                    tokens.push(Token::new(TokenKind::StringLiteral, buffer, row, column));
                     self.next();
                 }
                 _ => {
@@ -135,7 +135,7 @@ impl MonkeyCLexer {
                         self.next();
 
                         // Writing everything that is alphabetic to the buffer
-                        while self.current_char().is_alphabetic() {
+                        while self.current_char().is_alphabetic() && self.source.len() - 1 > self.currently_at {
                             buffer.push(self.current_char());
                             self.next();
                         }
@@ -188,36 +188,36 @@ impl MonkeyCLexer {
                         // Creating a buffer and writing a first character to it
                         let mut buffer = String::new();
                         buffer.push(c);
-                        let mut token_type = TokenKind::Int;
+                        let mut token_type = TokenKind::IntLiteral;
                         let mut got_alphabetic = false;
 
                         // Writing everything that is numeric or ./l/d to the buffer
                         while self.current_char().is_alphanumeric() || self.current_char() == '.' || self.current_char() == 'l' || self.current_char() == 'd' {
                             match self.current_char() {
                                 '.' => {
-                                    token_type = TokenKind::Float;
+                                    token_type = TokenKind::FloatLiteral;
                                 }
                                 'l' => {
                                     if got_alphabetic == false {
-                                        if token_type == TokenKind::Float {
+                                        if token_type == TokenKind::FloatLiteral {
                                             bail!(format!("Bad token at {}:{}: A Float can't have 'l' at the end", self.current_row, self.current_column));
                                         }
                                     } else {
                                         bail!(format!("Bad token at {}:{}: You can't have multiple number decorators", self.current_row, self.current_column));
                                     }
                                     got_alphabetic = true;
-                                    token_type = TokenKind::Long;
+                                    token_type = TokenKind::LongLiteral;
                                 }
                                 'd' => {
                                     if got_alphabetic == false {
-                                        if token_type == TokenKind::Float {
+                                        if token_type == TokenKind::FloatLiteral {
                                             bail!(format!("Bad token at {}:{}: A Float can't have 'd' at the end", self.current_row, self.current_column));
                                         }
                                     } else {
                                         bail!(format!("Bad token at {}:{}: Multiple number decorators are forbidden", self.current_row, self.current_column));
                                     }
                                     got_alphabetic = true;
-                                    token_type = TokenKind::Double;
+                                    token_type = TokenKind::DoubleLiteral;
                                 }
                                 _ => {}
                             }
