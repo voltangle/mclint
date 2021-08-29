@@ -1,5 +1,7 @@
 mod lexer;
 mod parser;
+#[cfg(test)]
+mod tests;
 
 use crate::lexer::MonkeyCLexer;
 use anyhow::Context;
