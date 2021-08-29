@@ -118,7 +118,7 @@ impl MonkeyCLexer {
                     let column = self.current_column;
                     self.next();
                     let mut buffer: String = String::new();
-                    while self.current_char() != '\"' {
+                    while self.current_char() != '\"' && self.source.len() - 1 > self.currently_at {
                         buffer.push(self.current_char());
                         self.next();
                     }
