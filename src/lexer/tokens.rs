@@ -1,9 +1,9 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    kind: TokenKind,
-    literal: String,
-    row: u64,
-    column: u64
+    pub kind: TokenKind,
+    pub literal: String,
+    pub row: u64,
+    pub column: u64
 }
 
 impl Token {
@@ -12,7 +12,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
     As,
     And,
