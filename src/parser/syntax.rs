@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum MonkeyCStatement {
-    VariableCreation {
+    VariableDeclaration {
         name: String,
         default_val: Expression,
         var_type: Option<String>,
