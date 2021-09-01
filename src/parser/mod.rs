@@ -167,7 +167,7 @@ impl MonkeyCParser {
                     match self.current_token().kind {
                         TokenKind::Assign => {
                             self.currently_at += 1;
-                            if !self.is_kind_a_type(self.current_token().kind) {
+                            if !self.is_kind_a_type(self.current_token().kind) && self.current_token().kind != TokenKind::Identifier {
                                 bail!(format!("Syntax error at {}:{}: Expected an identifier, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
                             }
                         }
