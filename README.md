@@ -1,2 +1,2 @@
 # mclint
-A linter for Monkey C language.
+A static analyser for Monkey C language.
