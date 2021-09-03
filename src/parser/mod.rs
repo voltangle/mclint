@@ -1,10 +1,10 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use crate::parser::syntax::{MonkeyCStatement, MonkeyCExpression};
+use crate::parser::ast::{MonkeyCStatement, MonkeyCExpression};
 use crate::parser::err::MCParseError;
 use std::process;
 use std::path::PathBuf;
 
-pub(crate) mod syntax;
+pub(crate) mod ast;
 mod err;
 
 macro_rules! syntax_expect_fmt {

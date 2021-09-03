@@ -83,7 +83,6 @@ fn main() -> Result<()> {
         }
     }
 
-    println!("{:?}", matches.value_of("INPUT"));
     Ok(())
 }
 
