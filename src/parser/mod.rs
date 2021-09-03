@@ -1,9 +1,26 @@
 use crate::lexer::tokens::{Token, TokenKind};
 use crate::parser::syntax::{MonkeyCStatement, MonkeyCExpression};
 use anyhow::bail;
-use anyhow::Result;
+use crate::parser::err::MCParseError;
+use std::process;
 
-pub mod syntax;
+pub(crate) mod syntax;
+mod err;
+
+macro_rules! syntax_expect_fmt {
+    ($expected:expr, $actual:expr) => {
+        format!("Syntax error at {}:{}: Expected {}, found '{}'", $actual.row, $actual.column, $expected, $actual.literal);
+    }
+}
+
+/// The same as syntax_expect_fmt, but without
+/// a "Syntax error at <row>:<column>" at the
+/// start
+macro_rules! syntax_expect_fmt_headl {
+    ($expected:expr, $actual:expr) => {
+        format!("Expected {}, found '{}'", $expected, $actual.literal);
+    }
+}
 
 pub struct MonkeyCParser {
     token_list: Vec<Token>,
@@ -34,8 +51,10 @@ impl MonkeyCParser {
         self.token_list.get(self.currently_at).unwrap().clone()
     }
 
-    pub fn parse(&mut self) -> Result<Vec<MonkeyCStatement>> {
+    //noinspection DuplicatedCode
+    pub fn parse(&mut self) -> Result<Vec<MonkeyCStatement>, Vec<MCParseError>> {
         let mut statements: Vec<MonkeyCStatement> = Vec::new();
+        let mut errors: Vec<MCParseError> = Vec::new();
 
         // For context saving, for example when we
         // are inside a class statement, we write
@@ -153,44 +172,84 @@ impl MonkeyCParser {
                     let mut default_val: MonkeyCExpression;
 
                     if !line_finished {
-                        bail!(format!("Syntax error at {}:{}: Expected at least ';' token, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
+                        errors.push(MCParseError {
+                            at: (t.row, t.column),
+                            literal_len: t.literal.len(),
+                            full_msg: syntax_expect_fmt!("at least ';' token", t),
+                            msg: syntax_expect_fmt_headl!("at least ';' token", t)
+                        });
                     }
 
                     self.currently_at += 1;
 
                     line_finished = false;
-                    if self.current_token().kind != TokenKind::Identifier {
-                        bail!(format!("Syntax error at {}:{}: Expected an identifier, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
-                    }
-                    name = self.current_token().literal;
-                    self.currently_at += 1;
-                    match self.current_token().kind {
-                        TokenKind::Assign => {
-                            self.currently_at += 1;
-                            if !self.is_kind_a_type(self.current_token().kind) && self.current_token().kind != TokenKind::Identifier {
-                                bail!(format!("Syntax error at {}:{}: Expected an identifier, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
+                    if self.token_list.get(self.currently_at) != None {
+                        if self.current_token().kind != TokenKind::Identifier {
+                            let t = self.current_token();
+                            errors.push(MCParseError {
+                                at: (t.row, t.column),
+                                literal_len: t.literal.len(),
+                                full_msg: syntax_expect_fmt!("an identifier", t),
+                                msg: syntax_expect_fmt_headl!("an identifier", t)
+                            });
+                        }
+                        name = self.current_token().literal;
+                        self.currently_at += 1;
+                        match self.current_token().kind {
+                            TokenKind::Assign => {
+                                self.currently_at += 1;
+                                if !self.is_kind_a_type(self.current_token().kind) && self.current_token().kind != TokenKind::Identifier {
+                                    let t = self.current_token();
+                                    errors.push(MCParseError {
+                                        at: (t.row, t.column),
+                                        literal_len: t.literal.len(),
+                                        full_msg: syntax_expect_fmt!("an identifier or literal", t),
+                                        msg: syntax_expect_fmt_headl!("an identifier or literal", t)
+                                    });
+                                }
+                            }
+                            TokenKind::As => {
+                                self.currently_at += 1;
+                                if self.current_token().kind != TokenKind::Identifier {
+                                    let t = self.current_token();
+                                    errors.push(MCParseError {
+                                        at: (t.row, t.column),
+                                        literal_len: t.literal.len(),
+                                        full_msg: syntax_expect_fmt!("an identifier", t),
+                                        msg: syntax_expect_fmt_headl!("an identifier", t)
+                                    });
+                                }
+                                var_type = Some(self.current_token().literal);
+                                self.currently_at += 2;
+                                if self.current_token().kind != TokenKind::Identifier && !self.is_kind_a_type(self.current_token().kind) {
+                                    let t = self.current_token();
+                                    errors.push(MCParseError {
+                                        at: (t.row, t.column),
+                                        literal_len: t.literal.len(),
+                                        full_msg: syntax_expect_fmt!("an identifier or literal", t),
+                                        msg: syntax_expect_fmt_headl!("an identifier or literal", t)
+                                    });
+                                }
+                            }
+                            _ => {
+                                let t = self.current_token();
+                                errors.push(MCParseError {
+                                    at: (t.row, t.column),
+                                    literal_len: t.literal.len(),
+                                    full_msg: syntax_expect_fmt!("an '=' or 'as' token", t),
+                                    msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t)
+                                });
                             }
                         }
-                        TokenKind::As => {
-                            self.currently_at += 1;
-                            if self.current_token().kind != TokenKind::Identifier {
-                                bail!(format!("Syntax error at {}:{}: Expected an identifier after 'as', found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
-                            }
-                            var_type = Some(self.current_token().literal);
-                            self.currently_at += 2;
-                            if self.current_token().kind != TokenKind::Identifier && !self.is_kind_a_type(self.current_token().kind) {
-                                bail!(format!("Syntax error at {}:{}: Expected an identifier or literal, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
-                            }
-                        }
-                        _ => {
-                            bail!(format!("Syntax error at {}:{}: Expected an '=' token or type declaration, found '{}'", self.current_token().row, self.current_token().column, self.current_token().literal));
-                        }
-                    }
-                    default_val = if !self.is_kind_a_type(self.current_token().kind) {
-                        MonkeyCExpression::Reference(self.current_token().literal)
+                        default_val = if !self.is_kind_a_type(self.current_token().kind) {
+                            MonkeyCExpression::Reference(self.current_token().literal)
+                        } else {
+                            MonkeyCExpression::Simple(self.current_token().literal)
+                        };
                     } else {
-                        MonkeyCExpression::Simple(self.current_token().literal)
-                    };
+                        eprintln!("Unexpected end of file");
+                        process::exit(1);
+                    }
                     let statement = MonkeyCStatement::VariableDeclaration {
                         name,
                         default_val,
@@ -298,6 +357,9 @@ impl MonkeyCParser {
                     self.currently_at += 1;
                 }
             }
+        }
+        if !errors.is_empty() {
+            return Err(errors);
         }
         println!("{:?}", statements);
         Ok(statements)
