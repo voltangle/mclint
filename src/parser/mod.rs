@@ -1,15 +1,15 @@
 use crate::lexer::tokens::{Token, TokenKind};
 use crate::parser::syntax::{MonkeyCStatement, MonkeyCExpression};
-use anyhow::bail;
 use crate::parser::err::MCParseError;
 use std::process;
+use std::path::PathBuf;
 
 pub(crate) mod syntax;
 mod err;
 
 macro_rules! syntax_expect_fmt {
-    ($expected:expr, $actual:expr) => {
-        format!("Syntax error at {}:{}: Expected {}, found '{}'", $actual.row, $actual.column, $expected, $actual.literal);
+    ($file:expr, $expected:expr, $actual:expr) => {
+        format!("Syntax error at {}:{}:{}: Expected {}, found '{}'", $file, $actual.row, $actual.column, $expected, $actual.literal);
     }
 }
 
@@ -24,13 +24,15 @@ macro_rules! syntax_expect_fmt_headl {
 
 pub struct MonkeyCParser {
     token_list: Vec<Token>,
+    file_path: PathBuf,
     currently_at: usize,
 }
 
 impl MonkeyCParser {
-    pub fn new(token_list: Vec<Token>) -> Self {
+    pub fn new(token_list: Vec<Token>, file_path: PathBuf) -> Self {
         Self {
             token_list,
+            file_path,
             currently_at: 0
         }
     }
@@ -172,10 +174,11 @@ impl MonkeyCParser {
                     let mut default_val: MonkeyCExpression;
 
                     if !line_finished {
+                        let t = self.token_list.get(self.currently_at - 1).unwrap().clone();
                         errors.push(MCParseError {
-                            at: (t.row, t.column),
+                            at: (t.row, t.column + 1),
                             literal_len: t.literal.len(),
-                            full_msg: syntax_expect_fmt!("at least ';' token", t),
+                            full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "at least ';' token", t),
                             msg: syntax_expect_fmt_headl!("at least ';' token", t)
                         });
                     }
@@ -189,7 +192,7 @@ impl MonkeyCParser {
                             errors.push(MCParseError {
                                 at: (t.row, t.column),
                                 literal_len: t.literal.len(),
-                                full_msg: syntax_expect_fmt!("an identifier", t),
+                                full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier", t),
                                 msg: syntax_expect_fmt_headl!("an identifier", t)
                             });
                         }
@@ -203,7 +206,7 @@ impl MonkeyCParser {
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!("an identifier or literal", t),
+                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier or literal", t),
                                         msg: syntax_expect_fmt_headl!("an identifier or literal", t)
                                     });
                                 }
@@ -215,7 +218,7 @@ impl MonkeyCParser {
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!("an identifier", t),
+                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier", t),
                                         msg: syntax_expect_fmt_headl!("an identifier", t)
                                     });
                                 }
@@ -226,7 +229,7 @@ impl MonkeyCParser {
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!("an identifier or literal", t),
+                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier or literal", t),
                                         msg: syntax_expect_fmt_headl!("an identifier or literal", t)
                                     });
                                 }
@@ -236,7 +239,7 @@ impl MonkeyCParser {
                                 errors.push(MCParseError {
                                     at: (t.row, t.column),
                                     literal_len: t.literal.len(),
-                                    full_msg: syntax_expect_fmt!("an '=' or 'as' token", t),
+                                    full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an '=' or 'as' token", t),
                                     msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t)
                                 });
                             }
