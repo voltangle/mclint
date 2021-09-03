@@ -364,7 +364,6 @@ impl MonkeyCParser {
         if !errors.is_empty() {
             return Err(errors);
         }
-        println!("{:?}", statements);
         Ok(statements)
     }
 }
