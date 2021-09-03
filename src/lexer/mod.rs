@@ -134,56 +134,61 @@ impl MonkeyCLexer {
                         buffer.push(c);
                         self.next();
 
-                        // Writing everything that is alphabetic to the buffer
-                        while self.current_char().is_alphabetic() && self.source.len() - 1 > self.currently_at {
-                            buffer.push(self.current_char());
-                            self.next();
-                        }
+                        if self.source.get(self.currently_at) != None {
 
-                        // Then matching for reserved words. If it's not reserved, then it's an identifier
-                        let kind: TokenKind = match buffer.as_str() {
-                            "as" => TokenKind::As,
-                            "and" => TokenKind::And,
-                            "break" => TokenKind::Break,
-                            "case" => TokenKind::Case,
-                            "catch" => TokenKind::Catch,
-                            "class" => TokenKind::Class,
-                            "const" => TokenKind::Const,
-                            "continue" => TokenKind::Continue,
-                            "default" => TokenKind::Default,
-                            "do" => TokenKind::Do,
-                            "else" => TokenKind::Else,
-                            "enum" => TokenKind::Enum,
-                            "extends" => TokenKind::Extends,
-                            "finally" => TokenKind::Finally,
-                            "for" => TokenKind::For,
-                            "function" => TokenKind::Function,
-                            "has" => TokenKind::Has,
-                            "hidden" => TokenKind::Hidden,
-                            "if" => TokenKind::If,
-                            "instanceof" => TokenKind::InstanceOf,
-                            "import" => TokenKind::Import,
-                            "me" => TokenKind::Me,
-                            "module" => TokenKind::Module,
-                            "new" => TokenKind::New,
-                            "null" => TokenKind::Null,
-                            "NaN" => TokenKind::Nan,
-                            "private" => TokenKind::Private,
-                            "protected" => TokenKind::Protected,
-                            "public" => TokenKind::Public,
-                            "or" => TokenKind::Or,
-                            "return" => TokenKind::Return,
-                            "self" => TokenKind::Self_,
-                            "static" => TokenKind::Static,
-                            "switch" => TokenKind::Switch,
-                            "throw" => TokenKind::Throw,
-                            "try" => TokenKind::Try,
-                            "using" => TokenKind::Using,
-                            "var" => TokenKind::Var,
-                            "while" => TokenKind::While,
-                            _ => TokenKind::Identifier,
-                        };
-                        tokens.push(Token::new(kind, buffer, row, column))
+                            // Writing everything that is alphabetic to the buffer
+                            while self.current_char().is_alphabetic() && self.source.len() - 1 > self.currently_at {
+                                buffer.push(self.current_char());
+                                self.next();
+                            }
+
+                            // Then matching for reserved words. If it's not reserved, then it's an identifier
+                            let kind: TokenKind = match buffer.as_str() {
+                                "as" => TokenKind::As,
+                                "and" => TokenKind::And,
+                                "break" => TokenKind::Break,
+                                "case" => TokenKind::Case,
+                                "catch" => TokenKind::Catch,
+                                "class" => TokenKind::Class,
+                                "const" => TokenKind::Const,
+                                "continue" => TokenKind::Continue,
+                                "default" => TokenKind::Default,
+                                "do" => TokenKind::Do,
+                                "else" => TokenKind::Else,
+                                "enum" => TokenKind::Enum,
+                                "extends" => TokenKind::Extends,
+                                "finally" => TokenKind::Finally,
+                                "for" => TokenKind::For,
+                                "function" => TokenKind::Function,
+                                "has" => TokenKind::Has,
+                                "hidden" => TokenKind::Hidden,
+                                "if" => TokenKind::If,
+                                "instanceof" => TokenKind::InstanceOf,
+                                "import" => TokenKind::Import,
+                                "me" => TokenKind::Me,
+                                "module" => TokenKind::Module,
+                                "new" => TokenKind::New,
+                                "null" => TokenKind::Null,
+                                "NaN" => TokenKind::Nan,
+                                "private" => TokenKind::Private,
+                                "protected" => TokenKind::Protected,
+                                "public" => TokenKind::Public,
+                                "or" => TokenKind::Or,
+                                "return" => TokenKind::Return,
+                                "self" => TokenKind::Self_,
+                                "static" => TokenKind::Static,
+                                "switch" => TokenKind::Switch,
+                                "throw" => TokenKind::Throw,
+                                "try" => TokenKind::Try,
+                                "using" => TokenKind::Using,
+                                "var" => TokenKind::Var,
+                                "while" => TokenKind::While,
+                                _ => TokenKind::Identifier,
+                            };
+                            tokens.push(Token::new(kind, buffer, row, column))
+                        } else {
+                            bail!("Unexpected end of file");
+                        }
                     } else if c.is_numeric() {
                         // Creating a buffer and writing a first character to it
                         let mut buffer = String::new();
