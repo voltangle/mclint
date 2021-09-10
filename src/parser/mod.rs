@@ -1,5 +1,5 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use crate::parser::ast::MonkeyCStatement;
+use crate::parser::ast::{MonkeyCStatement, MonkeyCExpression};
 use crate::parser::err::MCParseError;
 use std::path::PathBuf;
 
@@ -9,8 +9,8 @@ mod err;
 macro_rules! syntax_expect_fmt {
     ($file:expr, $expected:expr, $actual:expr) => {
         format!(
-            "Syntax error at {}:{}:{}: Expected {}, found '{}'",
-            $file, $actual.row, $actual.column, $expected, $actual.literal
+            "Syntax error at {}:{}:{}: Unexpected token '{}', should've been {}",
+            $file, $actual.row, $actual.column, $actual.literal, $expected
         );
     };
 }
@@ -20,7 +20,10 @@ macro_rules! syntax_expect_fmt {
 /// start
 macro_rules! syntax_expect_fmt_headl {
     ($expected:expr, $actual:expr) => {
-        format!("Expected {}, found '{}'", $expected, $actual.literal);
+        format!(
+            "Unexpected token '{}', should've been '{}'",
+            $actual.literal, $expected
+        );
     };
 }
 
@@ -39,53 +42,69 @@ struct ParserEnvironment {
     context: Vec<MonkeyCStatement>,
 }
 
+const DEFAULT_EXPECT_TOKEN: [TokenKind; 39] = [
+    TokenKind::As,
+    TokenKind::And,
+    TokenKind::Break,
+    TokenKind::Case,
+    TokenKind::Catch,
+    TokenKind::Class,
+    TokenKind::Const,
+    TokenKind::Continue,
+    TokenKind::Default,
+    TokenKind::Do,
+    TokenKind::Else,
+    TokenKind::Enum,
+    TokenKind::Extends,
+    TokenKind::Finally,
+    TokenKind::For,
+    TokenKind::Function,
+    TokenKind::Has,
+    TokenKind::Hidden,
+    TokenKind::If,
+    TokenKind::InstanceOf,
+    TokenKind::Import,
+    TokenKind::Me,
+    TokenKind::Module,
+    TokenKind::New,
+    TokenKind::Null,
+    TokenKind::Nan,
+    TokenKind::Private,
+    TokenKind::Protected,
+    TokenKind::Public,
+    TokenKind::Or,
+    TokenKind::Return,
+    TokenKind::Self_,
+    TokenKind::Static,
+    TokenKind::Switch,
+    TokenKind::Throw,
+    TokenKind::Try,
+    TokenKind::Using,
+    TokenKind::Var,
+    TokenKind::While,
+];
+
 impl ParserEnvironment {
     fn new() -> Self {
         Self {
-            next_expected: vec![
-                TokenKind::As,
-                TokenKind::And,
-                TokenKind::Break,
-                TokenKind::Case,
-                TokenKind::Catch,
-                TokenKind::Class,
-                TokenKind::Const,
-                TokenKind::Continue,
-                TokenKind::Default,
-                TokenKind::Do,
-                TokenKind::Else,
-                TokenKind::Enum,
-                TokenKind::Extends,
-                TokenKind::Finally,
-                TokenKind::For,
-                TokenKind::Function,
-                TokenKind::Has,
-                TokenKind::Hidden,
-                TokenKind::If,
-                TokenKind::InstanceOf,
-                TokenKind::Import,
-                TokenKind::Me,
-                TokenKind::Module,
-                TokenKind::New,
-                TokenKind::Null,
-                TokenKind::Nan,
-                TokenKind::Private,
-                TokenKind::Protected,
-                TokenKind::Public,
-                TokenKind::Or,
-                TokenKind::Return,
-                TokenKind::Self_,
-                TokenKind::Static,
-                TokenKind::Switch,
-                TokenKind::Throw,
-                TokenKind::Try,
-                TokenKind::Using,
-                TokenKind::Var,
-                TokenKind::While,
-            ],
+            next_expected: Vec::from(DEFAULT_EXPECT_TOKEN),
             context: vec![],
         }
     }
+}
+
+fn nice_tk_vec_str(vec: Vec<TokenKind>) -> String {
+    let mut str = String::new();
+
+    for (index, token) in vec.iter().enumerate() {
+        if index + 1 == vec.len() {
+            str.push_str(&*format!("{}", token).to_lowercase())
+        } else {
+            str.push_str(&*format!("{}, ", token).to_lowercase())
+        }
+    }
+
+    str
 }
 
 impl MonkeyCParser {
@@ -130,27 +149,36 @@ impl MonkeyCParser {
 
         while self.token_list.len() > self.currently_at {
             let t = self.current_token();
+            self.currently_at += 1;
             if !environ.next_expected.contains(&t.kind) {
                 errors.push(MCParseError {
                     at: (t.row, t.column),
                     literal_len: t.literal.len(),
                     full_msg: syntax_expect_fmt!(
                         self.file_path.clone().into_os_string().to_str().unwrap(),
-                        format!("any of {:?}", environ.next_expected),
+                        format!("any of {}", nice_tk_vec_str(environ.next_expected.clone())),
                         t
                     ),
                     msg: syntax_expect_fmt_headl!(format!("{:?}", environ.next_expected), t),
                 });
-                self.currently_at += 1;
                 continue;
             }
             match t.kind {
                 TokenKind::And => {}
+                TokenKind::As => environ.next_expected = vec![TokenKind::Identifier],
                 TokenKind::Break => {}
                 TokenKind::Case => {}
                 TokenKind::Catch => {}
                 TokenKind::Class => {}
-                TokenKind::Const => {}
+                TokenKind::Const => {
+                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                        name: None,
+                        default_val: None,
+                        var_type: None,
+                        is_const: true,
+                    });
+                    environ.next_expected = vec![TokenKind::Identifier]
+                }
                 TokenKind::Continue => {}
                 TokenKind::Default => {}
                 TokenKind::Do => {}
@@ -214,16 +242,42 @@ impl MonkeyCParser {
                             ),
                         })
                     } else {
-                        let len = environ.clone().context.len();
-                        match environ.context[len - 1] {
-                            MonkeyCStatement::VariableDeclaration { is_const, .. } => {
-                                environ.context.pop();
-                                environ.context.push(MonkeyCStatement::VariableDeclaration {
-                                    name: Some(t.literal),
-                                    default_val: None,
-                                    var_type: None,
-                                    is_const,
-                                });
+                        let len = environ.clone().context.len() - 1;
+                        match environ.context[len].clone() {
+                            MonkeyCStatement::VariableDeclaration {
+                                name,
+                                default_val,
+                                var_type,
+                                is_const,
+                            } => {
+                                if name == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name: Some(t.literal),
+                                        default_val: None,
+                                        var_type: None,
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::As, TokenKind::Assign]
+                                } else if var_type == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name,
+                                        default_val,
+                                        var_type: Some(t.literal),
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::Assign]
+                                } else if default_val == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name,
+                                        default_val: Some(MonkeyCExpression::Simple(t.literal)),
+                                        var_type,
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::Semicolon]
+                                }
                             }
                             MonkeyCStatement::ClassDeclaration { .. } => {}
                             MonkeyCStatement::EnumDeclaration { .. } => {}
@@ -237,7 +291,9 @@ impl MonkeyCParser {
                 TokenKind::ClosingBrace => {}
                 TokenKind::Asterisk => {}
                 TokenKind::Percent => {}
-                TokenKind::Assign => {}
+                TokenKind::Assign => {
+                    environ.next_expected = vec![TokenKind::Identifier]
+                },
                 TokenKind::Bang => {}
                 TokenKind::Tilde => {}
                 TokenKind::Plus => {}
@@ -248,12 +304,14 @@ impl MonkeyCParser {
                 TokenKind::GreaterThan => {}
                 TokenKind::Caret => {}
                 TokenKind::VerticalBar => {}
-                TokenKind::Semicolon => {}
-                TokenKind::As => {}
+                TokenKind::Semicolon => {
+                    environ.next_expected = Vec::from(DEFAULT_EXPECT_TOKEN)
+                }
                 TokenKind::DictionaryLiteral => {}
                 TokenKind::ArrayLiteral => {}
+                TokenKind::OnelineComment => {}
+                TokenKind::MultilineComment => {}
             }
-            self.currently_at += 1;
         }
         if !errors.is_empty() {
             return Err(errors);
