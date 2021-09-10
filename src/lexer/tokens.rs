@@ -96,4 +96,5 @@ pub enum TokenKind {
     /// This one: ^
     Caret,
     VerticalBar,
+    Comment
 }
