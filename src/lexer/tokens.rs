@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
@@ -96,5 +99,12 @@ pub enum TokenKind {
     /// This one: ^
     Caret,
     VerticalBar,
-    Comment
+    OnelineComment,
+    MultilineComment,
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
