@@ -1,20 +1,23 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCStatement {
     VariableDeclaration {
-        name: String,
-        default_val: MonkeyCExpression,
+        name: Option<String>,
+        default_val: Option<MonkeyCExpression>,
         var_type: Option<String>,
-        is_const: bool
+        is_const: bool,
     },
     ClassDeclaration {
         name: String,
         extends: Option<String>,
         children: Vec<MonkeyCStatement>,
-    }
-    // Others will be added in later
+    },
+    EnumDeclaration {
+        name: String,
+        items: Option<Vec<String>>,
+    }, // Others will be added in later
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExpression {
     /// "Simple" assignment
     /// # Example
@@ -38,7 +41,11 @@ pub enum MonkeyCExpression {
     /// var barVar = fooVar * 2;
     /// var bazVar = barVar / 2;
     /// ```
-    Mathematical(Box<MonkeyCExpression>, MonkeyCExprMathOperation, Box<MonkeyCExpression>),
+    Mathematical(
+        Box<MonkeyCExpression>,
+        MonkeyCExprMathOperation,
+        Box<MonkeyCExpression>,
+    ),
     /// Binary operations.
     /// # Examples
     /// ```
@@ -47,35 +54,43 @@ pub enum MonkeyCExpression {
     ///     // Do smth
     /// }
     /// ```
-    Binary(Box<MonkeyCExpression>, MonkeyCExprBinaryOperation, Box<MonkeyCExpression>),
+    Binary(
+        Box<MonkeyCExpression>,
+        MonkeyCExprBinaryOperation,
+        Box<MonkeyCExpression>,
+    ),
     /// Bitwise operations.
     /// # Examples
     /// ```
     /// var fooVar = 0x111 << 0x001;
     /// ```
-    Bitwise(Box<MonkeyCExpression>, MonkeyCExprBitwiseOperation, Box<MonkeyCExpression>)
+    Bitwise(
+        Box<MonkeyCExpression>,
+        MonkeyCExprBitwiseOperation,
+        Box<MonkeyCExpression>,
+    ),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprBitwiseOperation {
     LeftShift,
     RightShift,
     And,
     Or,
-    Xor
+    Xor,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprBinaryOperation {
     LessThan,
     LessThanEquals,
     GreaterThan,
     GreaterThanEquals,
     Equals,
-    NotEquals
+    NotEquals,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprMathOperation {
     Add,
     Subtract,
