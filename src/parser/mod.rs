@@ -8,8 +8,11 @@ mod err;
 
 macro_rules! syntax_expect_fmt {
     ($file:expr, $expected:expr, $actual:expr) => {
-        format!("Syntax error at {}:{}:{}: Expected {}, found '{}'", $file, $actual.row, $actual.column, $expected, $actual.literal);
-    }
+        format!(
+            "Syntax error at {}:{}:{}: Expected {}, found '{}'",
+            $file, $actual.row, $actual.column, $expected, $actual.literal
+        );
+    };
 }
 
 /// The same as syntax_expect_fmt, but without
@@ -18,7 +21,7 @@ macro_rules! syntax_expect_fmt {
 macro_rules! syntax_expect_fmt_headl {
     ($expected:expr, $actual:expr) => {
         format!("Expected {}, found '{}'", $expected, $actual.literal);
-    }
+    };
 }
 
 pub struct MonkeyCParser {
@@ -33,52 +36,54 @@ struct ParserEnvironment {
     // For context saving, for example when we
     // are inside a class statement, we write
     // received data here
-    context: Vec<MonkeyCStatement>
+    context: Vec<MonkeyCStatement>,
 }
 
 impl ParserEnvironment {
     fn new() -> Self {
         Self {
-            next_expected: vec!(TokenKind::As,
-                                TokenKind::And,
-                                TokenKind::Break,
-                                TokenKind::Case,
-                                TokenKind::Catch,
-                                TokenKind::Class,
-                                TokenKind::Const,
-                                TokenKind::Continue,
-                                TokenKind::Default,
-                                TokenKind::Do,
-                                TokenKind::Else,
-                                TokenKind::Enum,
-                                TokenKind::Extends,
-                                TokenKind::Finally,
-                                TokenKind::For,
-                                TokenKind::Function,
-                                TokenKind::Has,
-                                TokenKind::Hidden,
-                                TokenKind::If,
-                                TokenKind::InstanceOf,
-                                TokenKind::Import,
-                                TokenKind::Me,
-                                TokenKind::Module,
-                                TokenKind::New,
-                                TokenKind::Null,
-                                TokenKind::Nan,
-                                TokenKind::Private,
-                                TokenKind::Protected,
-                                TokenKind::Public,
-                                TokenKind::Or,
-                                TokenKind::Return,
-                                TokenKind::Self_,
-                                TokenKind::Static,
-                                TokenKind::Switch,
-                                TokenKind::Throw,
-                                TokenKind::Try,
-                                TokenKind::Using,
-                                TokenKind::Var,
-                                TokenKind::While),
-            context: vec!()
+            next_expected: vec![
+                TokenKind::As,
+                TokenKind::And,
+                TokenKind::Break,
+                TokenKind::Case,
+                TokenKind::Catch,
+                TokenKind::Class,
+                TokenKind::Const,
+                TokenKind::Continue,
+                TokenKind::Default,
+                TokenKind::Do,
+                TokenKind::Else,
+                TokenKind::Enum,
+                TokenKind::Extends,
+                TokenKind::Finally,
+                TokenKind::For,
+                TokenKind::Function,
+                TokenKind::Has,
+                TokenKind::Hidden,
+                TokenKind::If,
+                TokenKind::InstanceOf,
+                TokenKind::Import,
+                TokenKind::Me,
+                TokenKind::Module,
+                TokenKind::New,
+                TokenKind::Null,
+                TokenKind::Nan,
+                TokenKind::Private,
+                TokenKind::Protected,
+                TokenKind::Public,
+                TokenKind::Or,
+                TokenKind::Return,
+                TokenKind::Self_,
+                TokenKind::Static,
+                TokenKind::Switch,
+                TokenKind::Throw,
+                TokenKind::Try,
+                TokenKind::Using,
+                TokenKind::Var,
+                TokenKind::While,
+            ],
+            context: vec![],
         }
     }
 }
@@ -88,7 +93,7 @@ impl MonkeyCParser {
         Self {
             token_list,
             file_path,
-            currently_at: 0
+            currently_at: 0,
         }
     }
 
@@ -97,7 +102,15 @@ impl MonkeyCParser {
     /// `LongLiteral`, `FloatLiteral`, `DoubleLiteral`,
     /// `Null`, or `CharLiteral`.
     fn is_kind_a_type(k: TokenKind) -> bool {
-        if k == TokenKind::BoolLiteral || k == TokenKind::CharLiteral || k == TokenKind::StringLiteral || k == TokenKind::CharLiteral || k == TokenKind::LongLiteral || k == TokenKind::DoubleLiteral || k == TokenKind::FloatLiteral || k == TokenKind::IntLiteral {
+        if k == TokenKind::BoolLiteral
+            || k == TokenKind::CharLiteral
+            || k == TokenKind::StringLiteral
+            || k == TokenKind::CharLiteral
+            || k == TokenKind::LongLiteral
+            || k == TokenKind::DoubleLiteral
+            || k == TokenKind::FloatLiteral
+            || k == TokenKind::IntLiteral
+        {
             true
         } else {
             false
@@ -121,8 +134,12 @@ impl MonkeyCParser {
                 errors.push(MCParseError {
                     at: (t.row, t.column),
                     literal_len: t.literal.len(),
-                    full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), format!("any of {:?}", environ.next_expected), t),
-                    msg: syntax_expect_fmt_headl!(format!("{:?}", environ.next_expected), t)
+                    full_msg: syntax_expect_fmt!(
+                        self.file_path.clone().into_os_string().to_str().unwrap(),
+                        format!("any of {:?}", environ.next_expected),
+                        t
+                    ),
+                    msg: syntax_expect_fmt_headl!(format!("{:?}", environ.next_expected), t),
                 });
                 self.currently_at += 1;
                 continue;
@@ -130,7 +147,7 @@ impl MonkeyCParser {
             match t.kind {
                 TokenKind::And => {}
                 TokenKind::Break => {}
-                TokenKind::Case => { }
+                TokenKind::Case => {}
                 TokenKind::Catch => {}
                 TokenKind::Class => {}
                 TokenKind::Const => {}
@@ -160,15 +177,15 @@ impl MonkeyCParser {
                 TokenKind::Switch => {}
                 TokenKind::Throw => {}
                 TokenKind::Try => {}
-                TokenKind::Using => {},
+                TokenKind::Using => {}
                 TokenKind::Var => {
                     environ.context.push(MonkeyCStatement::VariableDeclaration {
                         name: None,
                         default_val: None,
                         var_type: None,
-                        is_const: false
+                        is_const: false,
                     });
-                    environ.next_expected = vec!(TokenKind::Identifier)
+                    environ.next_expected = vec![TokenKind::Identifier]
                 }
                 TokenKind::While => {}
                 TokenKind::BoolLiteral => {}
@@ -186,21 +203,27 @@ impl MonkeyCParser {
                         errors.push(MCParseError {
                             at: (t.row, t.column),
                             literal_len: t.literal.len(),
-                            full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), format!("any of {:?}", environ.next_expected), t),
-                            msg: syntax_expect_fmt_headl!(format!("any of {:?}", environ.next_expected), t)
+                            full_msg: syntax_expect_fmt!(
+                                self.file_path.clone().into_os_string().to_str().unwrap(),
+                                format!("any of {:?}", environ.next_expected),
+                                t
+                            ),
+                            msg: syntax_expect_fmt_headl!(
+                                format!("any of {:?}", environ.next_expected),
+                                t
+                            ),
                         })
                     } else {
                         let len = environ.clone().context.len();
                         match environ.context[len - 1] {
-                            MonkeyCStatement::VariableDeclaration { is_const, ..} => {
+                            MonkeyCStatement::VariableDeclaration { is_const, .. } => {
                                 environ.context.pop();
                                 environ.context.push(MonkeyCStatement::VariableDeclaration {
                                     name: Some(t.literal),
                                     default_val: None,
                                     var_type: None,
-                                    is_const
+                                    is_const,
                                 });
-
                             }
                             MonkeyCStatement::ClassDeclaration { .. } => {}
                             MonkeyCStatement::EnumDeclaration { .. } => {}
