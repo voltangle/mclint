@@ -1,7 +1,6 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use anyhow::Result;
 use anyhow::bail;
-
+use anyhow::Result;
 
 pub mod tokens;
 
@@ -10,7 +9,7 @@ pub struct MonkeyCLexer {
     source: Vec<char>,
     currently_at: usize,
     current_column: u64,
-    current_row: u64
+    current_row: u64,
 }
 
 impl MonkeyCLexer {
@@ -19,7 +18,7 @@ impl MonkeyCLexer {
             source,
             currently_at: 0,
             current_column: 1,
-            current_row: 1
+            current_row: 1,
         }
     }
 
@@ -40,76 +39,166 @@ impl MonkeyCLexer {
                     self.currently_at += 1;
                 }
                 '{' => {
-                    tokens.push(Token::new(TokenKind::OpeningBracket, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::OpeningBracket,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '}' => {
-                    tokens.push(Token::new(TokenKind::ClosingBracket, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::ClosingBracket,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '(' => {
-                    tokens.push(Token::new(TokenKind::OpeningBrace, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::OpeningBrace,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 ')' => {
-                    tokens.push(Token::new(TokenKind::ClosingBrace, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::ClosingBrace,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '~' => {
-                    tokens.push(Token::new(TokenKind::Tilde, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Tilde,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '=' => {
-                    tokens.push(Token::new(TokenKind::Assign, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Assign,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '-' => {
-                    tokens.push(Token::new(TokenKind::Minus, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Minus,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '+' => {
-                    tokens.push(Token::new(TokenKind::Plus, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Plus,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '/' => {
-                    tokens.push(Token::new(TokenKind::Slash, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Slash,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 ',' => {
-                    tokens.push(Token::new(TokenKind::Comma, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Comma,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 ';' => {
-                    tokens.push(Token::new(TokenKind::Semicolon, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Semicolon,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '!' => {
-                    tokens.push(Token::new(TokenKind::Bang, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Bang,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '^' => {
-                    tokens.push(Token::new(TokenKind::Caret, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Caret,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '>' => {
-                    tokens.push(Token::new(TokenKind::GreaterThan, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::GreaterThan,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '<' => {
-                    tokens.push(Token::new(TokenKind::LessThan, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::LessThan,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '&' => {
-                    tokens.push(Token::new(TokenKind::Ampersand, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::Ampersand,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '|' => {
-                    tokens.push(Token::new(TokenKind::VerticalBar, c.to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::VerticalBar,
+                        c.to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.next();
                 }
                 '\'' => {
                     self.next();
-                    tokens.push(Token::new(TokenKind::CharLiteral, self.current_char().to_string(), self.current_row, self.current_column));
+                    tokens.push(Token::new(
+                        TokenKind::CharLiteral,
+                        self.current_char().to_string(),
+                        self.current_row,
+                        self.current_column,
+                    ));
                     self.currently_at += 2;
                     self.current_column += 2;
                 }
@@ -135,9 +224,10 @@ impl MonkeyCLexer {
                         self.next();
 
                         if self.source.get(self.currently_at) != None {
-
                             // Writing everything that is alphabetic to the buffer
-                            while self.current_char().is_alphabetic() && self.source.len() - 1 > self.currently_at {
+                            while self.current_char().is_alphabetic()
+                                && self.source.len() - 1 > self.currently_at
+                            {
                                 buffer.push(self.current_char());
                                 self.next();
                             }
@@ -197,7 +287,11 @@ impl MonkeyCLexer {
                         let mut got_alphabetic = false;
 
                         // Writing everything that is numeric or ./l/d to the buffer
-                        while self.current_char().is_alphanumeric() || self.current_char() == '.' || self.current_char() == 'l' || self.current_char() == 'd' {
+                        while self.current_char().is_alphanumeric()
+                            || self.current_char() == '.'
+                            || self.current_char() == 'l'
+                            || self.current_char() == 'd'
+                        {
                             match self.current_char() {
                                 '.' => {
                                     token_type = TokenKind::FloatLiteral;

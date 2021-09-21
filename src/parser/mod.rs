@@ -1,16 +1,19 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use crate::parser::ast::{MonkeyCStatement, MonkeyCExpression};
+use crate::parser::ast::{MonkeyCExpression, MonkeyCStatement};
 use crate::parser::err::MCParseError;
-use std::process;
 use std::path::PathBuf;
+use std::process;
 
 pub(crate) mod ast;
 mod err;
 
 macro_rules! syntax_expect_fmt {
     ($file:expr, $expected:expr, $actual:expr) => {
-        format!("Syntax error at {}:{}:{}: Expected {}, found '{}'", $file, $actual.row, $actual.column, $expected, $actual.literal);
-    }
+        format!(
+            "Syntax error at {}:{}:{}: Expected {}, found '{}'",
+            $file, $actual.row, $actual.column, $expected, $actual.literal
+        );
+    };
 }
 
 /// The same as syntax_expect_fmt, but without
@@ -19,7 +22,7 @@ macro_rules! syntax_expect_fmt {
 macro_rules! syntax_expect_fmt_headl {
     ($expected:expr, $actual:expr) => {
         format!("Expected {}, found '{}'", $expected, $actual.literal);
-    }
+    };
 }
 
 pub struct MonkeyCParser {
@@ -33,7 +36,7 @@ impl MonkeyCParser {
         Self {
             token_list,
             file_path,
-            currently_at: 0
+            currently_at: 0,
         }
     }
 
@@ -42,7 +45,15 @@ impl MonkeyCParser {
     /// `LongLiteral`, `FloatLiteral`, `DoubleLiteral`,
     /// `Null`, or `CharLiteral`.
     fn is_kind_a_type(&self, k: TokenKind) -> bool {
-        if k == TokenKind::BoolLiteral || k == TokenKind::CharLiteral || k == TokenKind::StringLiteral || k == TokenKind::CharLiteral || k == TokenKind::LongLiteral || k == TokenKind::DoubleLiteral || k == TokenKind::FloatLiteral || k == TokenKind::IntLiteral {
+        if k == TokenKind::BoolLiteral
+            || k == TokenKind::CharLiteral
+            || k == TokenKind::StringLiteral
+            || k == TokenKind::CharLiteral
+            || k == TokenKind::LongLiteral
+            || k == TokenKind::DoubleLiteral
+            || k == TokenKind::FloatLiteral
+            || k == TokenKind::IntLiteral
+        {
             true
         } else {
             false
@@ -167,7 +178,7 @@ impl MonkeyCParser {
                 }
                 TokenKind::Using => {
                     self.currently_at += 1;
-                },
+                }
                 TokenKind::Var => {
                     let mut name: String = String::new();
                     let mut var_type: Option<String> = None;
@@ -178,8 +189,12 @@ impl MonkeyCParser {
                         errors.push(MCParseError {
                             at: (t.row, t.column + 1),
                             literal_len: t.literal.len(),
-                            full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "at least ';' token", t),
-                            msg: syntax_expect_fmt_headl!("at least ';' token", t)
+                            full_msg: syntax_expect_fmt!(
+                                self.file_path.clone().into_os_string().to_str().unwrap(),
+                                "at least ';' token",
+                                t
+                            ),
+                            msg: syntax_expect_fmt_headl!("at least ';' token", t),
                         });
                     }
 
@@ -192,8 +207,12 @@ impl MonkeyCParser {
                             errors.push(MCParseError {
                                 at: (t.row, t.column),
                                 literal_len: t.literal.len(),
-                                full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier", t),
-                                msg: syntax_expect_fmt_headl!("an identifier", t)
+                                full_msg: syntax_expect_fmt!(
+                                    self.file_path.clone().into_os_string().to_str().unwrap(),
+                                    "an identifier",
+                                    t
+                                ),
+                                msg: syntax_expect_fmt_headl!("an identifier", t),
                             });
                         }
                         name = self.current_token().literal;
@@ -201,13 +220,26 @@ impl MonkeyCParser {
                         match self.current_token().kind {
                             TokenKind::Assign => {
                                 self.currently_at += 1;
-                                if !self.is_kind_a_type(self.current_token().kind) && self.current_token().kind != TokenKind::Identifier {
+                                if !self.is_kind_a_type(self.current_token().kind)
+                                    && self.current_token().kind != TokenKind::Identifier
+                                {
                                     let t = self.current_token();
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier or literal", t),
-                                        msg: syntax_expect_fmt_headl!("an identifier or literal", t)
+                                        full_msg: syntax_expect_fmt!(
+                                            self.file_path
+                                                .clone()
+                                                .into_os_string()
+                                                .to_str()
+                                                .unwrap(),
+                                            "an identifier or literal",
+                                            t
+                                        ),
+                                        msg: syntax_expect_fmt_headl!(
+                                            "an identifier or literal",
+                                            t
+                                        ),
                                     });
                                 }
                             }
@@ -218,19 +250,40 @@ impl MonkeyCParser {
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier", t),
-                                        msg: syntax_expect_fmt_headl!("an identifier", t)
+                                        full_msg: syntax_expect_fmt!(
+                                            self.file_path
+                                                .clone()
+                                                .into_os_string()
+                                                .to_str()
+                                                .unwrap(),
+                                            "an identifier",
+                                            t
+                                        ),
+                                        msg: syntax_expect_fmt_headl!("an identifier", t),
                                     });
                                 }
                                 var_type = Some(self.current_token().literal);
                                 self.currently_at += 2;
-                                if self.current_token().kind != TokenKind::Identifier && !self.is_kind_a_type(self.current_token().kind) {
+                                if self.current_token().kind != TokenKind::Identifier
+                                    && !self.is_kind_a_type(self.current_token().kind)
+                                {
                                     let t = self.current_token();
                                     errors.push(MCParseError {
                                         at: (t.row, t.column),
                                         literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an identifier or literal", t),
-                                        msg: syntax_expect_fmt_headl!("an identifier or literal", t)
+                                        full_msg: syntax_expect_fmt!(
+                                            self.file_path
+                                                .clone()
+                                                .into_os_string()
+                                                .to_str()
+                                                .unwrap(),
+                                            "an identifier or literal",
+                                            t
+                                        ),
+                                        msg: syntax_expect_fmt_headl!(
+                                            "an identifier or literal",
+                                            t
+                                        ),
                                     });
                                 }
                             }
@@ -239,8 +292,12 @@ impl MonkeyCParser {
                                 errors.push(MCParseError {
                                     at: (t.row, t.column),
                                     literal_len: t.literal.len(),
-                                    full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an '=' or 'as' token", t),
-                                    msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t)
+                                    full_msg: syntax_expect_fmt!(
+                                        self.file_path.clone().into_os_string().to_str().unwrap(),
+                                        "an '=' or 'as' token",
+                                        t
+                                    ),
+                                    msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t),
                                 });
                             }
                         }
@@ -257,7 +314,7 @@ impl MonkeyCParser {
                         name,
                         default_val,
                         var_type,
-                        is_const: false
+                        is_const: false,
                     };
                     statements.push(statement);
                     self.currently_at += 1;
