@@ -258,7 +258,7 @@ impl MonkeyCParser {
                                         var_type: None,
                                         is_const,
                                     });
-                                    environ.next_expected = vec![TokenKind::As, TokenKind::Assign]
+                                    environ.next_expected = vec![TokenKind::As, TokenKind::Assign, TokenKind::Semicolon]
                                 } else if var_type == None {
                                     environ.context.pop();
                                     environ.context.push(MonkeyCStatement::VariableDeclaration {
@@ -284,6 +284,7 @@ impl MonkeyCParser {
                         }
                     }
                 }
+                // Punctuation
                 TokenKind::Comma => {}
                 TokenKind::OpeningBracket => {}
                 TokenKind::ClosingBracket => {}
@@ -305,6 +306,22 @@ impl MonkeyCParser {
                 TokenKind::Caret => {}
                 TokenKind::VerticalBar => {}
                 TokenKind::Semicolon => {
+                    match &*environ.context.last().unwrap() {
+                        MonkeyCStatement::VariableDeclaration { .. } => {
+                            statements.push(environ.context[environ.context.len() - 1].clone());
+                        }
+                        MonkeyCStatement::ClassDeclaration { name, extends, children } => {
+                            statements.pop();
+                            let mut class_children = children.clone();
+                            class_children.push(environ.context[environ.context.len() - 1].clone());
+                            statements.push(MonkeyCStatement::ClassDeclaration {
+                                name: (*name.clone()).parse().unwrap(),
+                                extends: extends.clone(),
+                                children: vec![]
+                            })
+                        }
+                        _ => {}
+                    }
                     environ.next_expected = Vec::from(DEFAULT_EXPECT_TOKEN)
                 }
                 TokenKind::DictionaryLiteral => {}
