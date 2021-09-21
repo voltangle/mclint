@@ -19,14 +19,14 @@ fn basic_code() -> Result<()> {
         parser.parse().unwrap(),
         vec![
             VariableDeclaration {
-                name: "myVar".to_string(),
-                default_val: MonkeyCExpression::Simple("Hm".to_string()),
+                name: Some("myVar".to_string()),
+                default_val: Some(MonkeyCExpression::Simple("Hm".to_string())),
                 var_type: Some("String".to_string()),
                 is_const: false
             },
             VariableDeclaration {
-                name: "myOtherVar".to_string(),
-                default_val: MonkeyCExpression::Reference("myVar".to_string()),
+                name: Some("myOtherVar".to_string()),
+                default_val: Some(MonkeyCExpression::Reference("myVar".to_string())),
                 var_type: None,
                 is_const: false
             }

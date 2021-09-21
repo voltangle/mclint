@@ -4,14 +4,14 @@ use crate::parser::err::MCParseError;
 use std::path::PathBuf;
 use std::process;
 
-pub(crate) mod ast;
+pub mod ast;
 mod err;
 
 macro_rules! syntax_expect_fmt {
     ($file:expr, $expected:expr, $actual:expr) => {
         format!(
-            "Syntax error at {}:{}:{}: Expected {}, found '{}'",
-            $file, $actual.row, $actual.column, $expected, $actual.literal
+            "Syntax error at {}:{}:{}: Unexpected token '{}', should've been {}",
+            $file, $actual.row, $actual.column, $actual.literal, $expected
         );
     };
 }
@@ -21,7 +21,10 @@ macro_rules! syntax_expect_fmt {
 /// start
 macro_rules! syntax_expect_fmt_headl {
     ($expected:expr, $actual:expr) => {
-        format!("Expected {}, found '{}'", $expected, $actual.literal);
+        format!(
+            "Unexpected token '{}', should've been '{}'",
+            $actual.literal, $expected
+        );
     };
 }
 
@@ -29,6 +32,80 @@ pub struct MonkeyCParser {
     token_list: Vec<Token>,
     file_path: PathBuf,
     currently_at: usize,
+}
+
+#[derive(Debug, Clone)]
+struct ParserEnvironment {
+    next_expected: Vec<TokenKind>,
+    // For context saving, for example when we
+    // are inside a class statement, we write
+    // received data here
+    context: Vec<MonkeyCStatement>,
+}
+
+const DEFAULT_EXPECT_TOKEN: [TokenKind; 39] = [
+    TokenKind::As,
+    TokenKind::And,
+    TokenKind::Break,
+    TokenKind::Case,
+    TokenKind::Catch,
+    TokenKind::Class,
+    TokenKind::Const,
+    TokenKind::Continue,
+    TokenKind::Default,
+    TokenKind::Do,
+    TokenKind::Else,
+    TokenKind::Enum,
+    TokenKind::Extends,
+    TokenKind::Finally,
+    TokenKind::For,
+    TokenKind::Function,
+    TokenKind::Has,
+    TokenKind::Hidden,
+    TokenKind::If,
+    TokenKind::InstanceOf,
+    TokenKind::Import,
+    TokenKind::Me,
+    TokenKind::Module,
+    TokenKind::New,
+    TokenKind::Null,
+    TokenKind::Nan,
+    TokenKind::Private,
+    TokenKind::Protected,
+    TokenKind::Public,
+    TokenKind::Or,
+    TokenKind::Return,
+    TokenKind::Self_,
+    TokenKind::Static,
+    TokenKind::Switch,
+    TokenKind::Throw,
+    TokenKind::Try,
+    TokenKind::Using,
+    TokenKind::Var,
+    TokenKind::While,
+];
+
+impl ParserEnvironment {
+    fn new() -> Self {
+        Self {
+            next_expected: Vec::from(DEFAULT_EXPECT_TOKEN),
+            context: vec![],
+        }
+    }
+}
+
+fn nice_tk_vec_str(vec: Vec<TokenKind>) -> String {
+    let mut str = String::new();
+
+    for (index, token) in vec.iter().enumerate() {
+        if index + 1 == vec.len() {
+            str.push_str(&*format!("{}", token).to_lowercase())
+        } else {
+            str.push_str(&*format!("{}, ", token).to_lowercase())
+        }
+    }
+
+    str
 }
 
 impl MonkeyCParser {
@@ -44,7 +121,8 @@ impl MonkeyCParser {
     /// `BoolLiteral`, `StringLiteral`, `IntLiteral`,
     /// `LongLiteral`, `FloatLiteral`, `DoubleLiteral`,
     /// `Null`, or `CharLiteral`.
-    fn is_kind_a_type(&self, k: TokenKind) -> bool {
+
+    fn is_kind_a_type(k: TokenKind) -> bool {
         if k == TokenKind::BoolLiteral
             || k == TokenKind::CharLiteral
             || k == TokenKind::StringLiteral
@@ -69,246 +147,141 @@ impl MonkeyCParser {
         let mut statements: Vec<MonkeyCStatement> = Vec::new();
         let mut errors: Vec<MCParseError> = Vec::new();
 
-        // For context saving, for example when we
-        // are inside a class statement, we write
-        // received data here
-        let context: Option<MonkeyCStatement> = None;
+        let mut environ = ParserEnvironment::new();
 
-        // This is for understanding whether we finished to parse a line
-        let mut line_finished = true;
         while self.token_list.len() > self.currently_at {
             let t = self.current_token();
-
+            self.currently_at += 1;
+            if !environ.next_expected.contains(&t.kind) {
+                errors.push(MCParseError {
+                    at: (t.row, t.column),
+                    literal_len: t.literal.len(),
+                    full_msg: syntax_expect_fmt!(
+                        self.file_path.clone().into_os_string().to_str().unwrap(),
+                        format!("any of {}", nice_tk_vec_str(environ.next_expected.clone())),
+                        t
+                    ),
+                    msg: syntax_expect_fmt_headl!(format!("{:?}", environ.next_expected), t),
+                });
+                continue;
+            }
             match t.kind {
-                TokenKind::And => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Break => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Case => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Catch => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Class => {
-                    self.currently_at += 1;
-                }
+                TokenKind::And => {}
+                TokenKind::As => environ.next_expected = vec![TokenKind::Identifier],
+                TokenKind::Break => {}
+                TokenKind::Case => {}
+                TokenKind::Catch => {}
+                TokenKind::Class => {}
                 TokenKind::Const => {
-                    self.currently_at += 1;
+                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                        name: None,
+                        default_val: None,
+                        var_type: None,
+                        is_const: true,
+                    });
+                    environ.next_expected = vec![TokenKind::Identifier]
                 }
-                TokenKind::Continue => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Default => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Do => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Else => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Enum => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Extends => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Finally => {
-                    self.currently_at += 1;
-                }
-                TokenKind::For => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Function => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Has => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Hidden => {
-                    self.currently_at += 1;
-                }
-                TokenKind::If => {
-                    self.currently_at += 1;
-                }
-                TokenKind::InstanceOf => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Import => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Me => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Module => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Private => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Protected => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Public => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Or => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Return => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Self_ => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Static => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Switch => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Throw => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Try => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Using => {
-                    self.currently_at += 1;
-                }
+                TokenKind::Continue => {}
+                TokenKind::Default => {}
+                TokenKind::Do => {}
+                TokenKind::Else => {}
+                TokenKind::Enum => {}
+                TokenKind::Extends => {}
+                TokenKind::Finally => {}
+                TokenKind::For => {}
+                TokenKind::Function => {}
+                TokenKind::Has => {}
+                TokenKind::Hidden => {}
+                TokenKind::If => {}
+                TokenKind::InstanceOf => {}
+                TokenKind::Import => {}
+                TokenKind::Me => {}
+                TokenKind::Module => {}
+                TokenKind::Private => {}
+                TokenKind::Protected => {}
+                TokenKind::Public => {}
+                TokenKind::Or => {}
+                TokenKind::Return => {}
+                TokenKind::Self_ => {}
+                TokenKind::Static => {}
+                TokenKind::Switch => {}
+                TokenKind::Throw => {}
+                TokenKind::Try => {}
+                TokenKind::Using => {}
                 TokenKind::Var => {
-                    let mut name: String = String::new();
-                    let mut var_type: Option<String> = None;
-                    let mut default_val: MonkeyCExpression;
-
-                    if !line_finished {
-                        let t = self.token_list.get(self.currently_at - 1).unwrap().clone();
+                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                        name: None,
+                        default_val: None,
+                        var_type: None,
+                        is_const: false,
+                    });
+                    environ.next_expected = vec![TokenKind::Identifier]
+                }
+                TokenKind::While => {}
+                TokenKind::BoolLiteral => {}
+                TokenKind::StringLiteral => {}
+                TokenKind::IntLiteral => {}
+                TokenKind::LongLiteral => {}
+                TokenKind::FloatLiteral => {}
+                TokenKind::DoubleLiteral => {}
+                TokenKind::Null => {}
+                TokenKind::CharLiteral => {}
+                TokenKind::Nan => {}
+                TokenKind::New => {}
+                TokenKind::Identifier => {
+                    if environ.context.is_empty() {
                         errors.push(MCParseError {
-                            at: (t.row, t.column + 1),
+                            at: (t.row, t.column),
                             literal_len: t.literal.len(),
                             full_msg: syntax_expect_fmt!(
                                 self.file_path.clone().into_os_string().to_str().unwrap(),
-                                "at least ';' token",
+                                format!("any of {:?}", environ.next_expected),
                                 t
                             ),
-                            msg: syntax_expect_fmt_headl!("at least ';' token", t),
-                        });
-                    }
-
-                    self.currently_at += 1;
-
-                    line_finished = false;
-                    if self.token_list.get(self.currently_at) != None {
-                        if self.current_token().kind != TokenKind::Identifier {
-                            let t = self.current_token();
-                            errors.push(MCParseError {
-                                at: (t.row, t.column),
-                                literal_len: t.literal.len(),
-                                full_msg: syntax_expect_fmt!(
-                                    self.file_path.clone().into_os_string().to_str().unwrap(),
-                                    "an identifier",
-                                    t
-                                ),
-                                msg: syntax_expect_fmt_headl!("an identifier", t),
-                            });
-                        }
-                        name = self.current_token().literal;
-                        self.currently_at += 1;
-                        match self.current_token().kind {
-                            TokenKind::Assign => {
-                                self.currently_at += 1;
-                                if !self.is_kind_a_type(self.current_token().kind)
-                                    && self.current_token().kind != TokenKind::Identifier
-                                {
-                                    let t = self.current_token();
-                                    errors.push(MCParseError {
-                                        at: (t.row, t.column),
-                                        literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(
-                                            self.file_path
-                                                .clone()
-                                                .into_os_string()
-                                                .to_str()
-                                                .unwrap(),
-                                            "an identifier or literal",
-                                            t
-                                        ),
-                                        msg: syntax_expect_fmt_headl!(
-                                            "an identifier or literal",
-                                            t
-                                        ),
-                                    });
-                                }
-                            }
-                            TokenKind::As => {
-                                self.currently_at += 1;
-                                if self.current_token().kind != TokenKind::Identifier {
-                                    let t = self.current_token();
-                                    errors.push(MCParseError {
-                                        at: (t.row, t.column),
-                                        literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(
-                                            self.file_path
-                                                .clone()
-                                                .into_os_string()
-                                                .to_str()
-                                                .unwrap(),
-                                            "an identifier",
-                                            t
-                                        ),
-                                        msg: syntax_expect_fmt_headl!("an identifier", t),
-                                    });
-                                }
-                                var_type = Some(self.current_token().literal);
-                                self.currently_at += 2;
-                                if self.current_token().kind != TokenKind::Identifier
-                                    && !self.is_kind_a_type(self.current_token().kind)
-                                {
-                                    let t = self.current_token();
-                                    errors.push(MCParseError {
-                                        at: (t.row, t.column),
-                                        literal_len: t.literal.len(),
-                                        full_msg: syntax_expect_fmt!(
-                                            self.file_path
-                                                .clone()
-                                                .into_os_string()
-                                                .to_str()
-                                                .unwrap(),
-                                            "an identifier or literal",
-                                            t
-                                        ),
-                                        msg: syntax_expect_fmt_headl!(
-                                            "an identifier or literal",
-                                            t
-                                        ),
-                                    });
-                                }
-                            }
-                            _ => {
-                                let t = self.current_token();
-                                errors.push(MCParseError {
-                                    at: (t.row, t.column),
-                                    literal_len: t.literal.len(),
-                                    full_msg: syntax_expect_fmt!(
-                                        self.file_path.clone().into_os_string().to_str().unwrap(),
-                                        "an '=' or 'as' token",
-                                        t
-                                    ),
-                                    msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t),
-                                });
-                            }
-                        }
-                        default_val = if !self.is_kind_a_type(self.current_token().kind) {
-                            MonkeyCExpression::Reference(self.current_token().literal)
-                        } else {
-                            MonkeyCExpression::Simple(self.current_token().literal)
-                        };
+                            msg: syntax_expect_fmt_headl!(
+                                format!("any of {:?}", environ.next_expected),
+                                t
+                            ),
+                        })
                     } else {
-                        eprintln!("Unexpected end of file");
-                        process::exit(1);
+                        let len = environ.clone().context.len() - 1;
+                        match environ.context[len].clone() {
+                            MonkeyCStatement::VariableDeclaration {
+                                name,
+                                default_val,
+                                var_type,
+                                is_const,
+                            } => {
+                                if name == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name: Some(t.literal),
+                                        default_val: None,
+                                        var_type: None,
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::As, TokenKind::Assign, TokenKind::Semicolon]
+                                } else if var_type == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name,
+                                        default_val,
+                                        var_type: Some(t.literal),
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::Assign]
+                                } else if default_val == None {
+                                    environ.context.pop();
+                                    environ.context.push(MonkeyCStatement::VariableDeclaration {
+                                        name,
+                                        default_val: Some(MonkeyCExpression::Simple(t.literal)),
+                                        var_type,
+                                        is_const,
+                                    });
+                                    environ.next_expected = vec![TokenKind::Semicolon]
+                                }
+                            }
+                        }
                     }
                     let statement = MonkeyCStatement::VariableDeclaration {
                         name,
@@ -319,103 +292,50 @@ impl MonkeyCParser {
                     statements.push(statement);
                     self.currently_at += 1;
                 }
-                TokenKind::While => {
-                    self.currently_at += 1;
-                }
-                TokenKind::BoolLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::StringLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::IntLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::LongLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::FloatLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::DoubleLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Null => {
-                    self.currently_at += 1;
-                }
-                TokenKind::CharLiteral => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Nan => {
-                    self.currently_at += 1;
-                }
-                TokenKind::New => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Identifier => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Comma => {
-                    self.currently_at += 1;
-                }
-                TokenKind::OpeningBracket => {
-                    self.currently_at += 1;
-                }
-                TokenKind::ClosingBracket => {
-                    self.currently_at += 1;
-                }
-                TokenKind::OpeningBrace => {
-                    self.currently_at += 1;
-                }
-                TokenKind::ClosingBrace => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Asterisk => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Percent => {
-                    self.currently_at += 1;
-                }
+                // Punctuation
+                TokenKind::Comma => {}
+                TokenKind::OpeningBracket => {}
+                TokenKind::ClosingBracket => {}
+                TokenKind::OpeningBrace => {}
+                TokenKind::ClosingBrace => {}
+                TokenKind::Asterisk => {}
+                TokenKind::Percent => {}
                 TokenKind::Assign => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Bang => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Tilde => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Plus => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Minus => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Slash => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Ampersand => {
-                    self.currently_at += 1;
-                }
-                TokenKind::LessThan => {
-                    self.currently_at += 1;
-                }
-                TokenKind::GreaterThan => {
-                    self.currently_at += 1;
-                }
-                TokenKind::Caret => {
-                    self.currently_at += 1;
-                }
-                TokenKind::VerticalBar => {
-                    self.currently_at += 1;
-                }
+                    environ.next_expected = vec![TokenKind::Identifier]
+                },
+                TokenKind::Bang => {}
+                TokenKind::Tilde => {}
+                TokenKind::Plus => {}
+                TokenKind::Minus => {}
+                TokenKind::Slash => {}
+                TokenKind::Ampersand => {}
+                TokenKind::LessThan => {}
+                TokenKind::GreaterThan => {}
+                TokenKind::Caret => {}
+                TokenKind::VerticalBar => {}
                 TokenKind::Semicolon => {
-                    line_finished = true;
-                    self.currently_at += 1;
+                    match &*environ.context.last().unwrap() {
+                        MonkeyCStatement::VariableDeclaration { .. } => {
+                            statements.push(environ.context[environ.context.len() - 1].clone());
+                        }
+                        MonkeyCStatement::ClassDeclaration { name, extends, children } => {
+                            statements.pop();
+                            let mut class_children = children.clone();
+                            class_children.push(environ.context[environ.context.len() - 1].clone());
+                            statements.push(MonkeyCStatement::ClassDeclaration {
+                                name: (*name.clone()).parse().unwrap(),
+                                extends: extends.clone(),
+                                children: vec![]
+                            })
+                        }
+                        _ => {}
+                    }
+                    environ.next_expected = Vec::from(DEFAULT_EXPECT_TOKEN)
                 }
-                _ => {
-                    self.currently_at += 1;
-                }
+                TokenKind::DictionaryLiteral => {}
+                TokenKind::ArrayLiteral => {}
+                TokenKind::OnelineComment => {}
+                TokenKind::MultilineComment => {}
             }
         }
         if !errors.is_empty() {

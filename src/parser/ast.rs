@@ -1,8 +1,8 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCStatement {
     VariableDeclaration {
-        name: String,
-        default_val: MonkeyCExpression,
+        name: Option<String>,
+        default_val: Option<MonkeyCExpression>,
         var_type: Option<String>,
         is_const: bool,
     },
@@ -10,10 +10,14 @@ pub enum MonkeyCStatement {
         name: String,
         extends: Option<String>,
         children: Vec<MonkeyCStatement>,
+    },
+    EnumDeclaration {
+        name: String,
+        items: Option<Vec<String>>,
     }, // Others will be added in later
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExpression {
     /// "Simple" assignment
     /// # Example
@@ -67,7 +71,7 @@ pub enum MonkeyCExpression {
     ),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprBitwiseOperation {
     LeftShift,
     RightShift,
@@ -76,7 +80,7 @@ pub enum MonkeyCExprBitwiseOperation {
     Xor,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprBinaryOperation {
     LessThan,
     LessThanEquals,
@@ -86,7 +90,7 @@ pub enum MonkeyCExprBinaryOperation {
     NotEquals,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyCExprMathOperation {
     Add,
     Subtract,
