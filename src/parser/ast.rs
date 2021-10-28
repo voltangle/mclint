@@ -4,7 +4,7 @@ pub enum MonkeyCStatement {
         name: Option<String>,
         default_val: Option<MonkeyCExpression>,
         var_type: Option<String>,
-        is_const: bool,
+        is_const: bool
     },
     ClassDeclaration {
         name: String,
@@ -41,11 +41,7 @@ pub enum MonkeyCExpression {
     /// var barVar = fooVar * 2;
     /// var bazVar = barVar / 2;
     /// ```
-    Mathematical(
-        Box<MonkeyCExpression>,
-        MonkeyCExprMathOperation,
-        Box<MonkeyCExpression>,
-    ),
+    Mathematical(Box<MonkeyCExpression>, MonkeyCExprMathOperation, Box<MonkeyCExpression>),
     /// Binary operations.
     /// # Examples
     /// ```
@@ -54,21 +50,13 @@ pub enum MonkeyCExpression {
     ///     // Do smth
     /// }
     /// ```
-    Binary(
-        Box<MonkeyCExpression>,
-        MonkeyCExprBinaryOperation,
-        Box<MonkeyCExpression>,
-    ),
+    Binary(Box<MonkeyCExpression>, MonkeyCExprBinaryOperation, Box<MonkeyCExpression>),
     /// Bitwise operations.
     /// # Examples
     /// ```
     /// var fooVar = 0x111 << 0x001;
     /// ```
-    Bitwise(
-        Box<MonkeyCExpression>,
-        MonkeyCExprBitwiseOperation,
-        Box<MonkeyCExpression>,
-    ),
+    Bitwise(Box<MonkeyCExpression>, MonkeyCExprBitwiseOperation, Box<MonkeyCExpression>)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -77,7 +65,7 @@ pub enum MonkeyCExprBitwiseOperation {
     RightShift,
     And,
     Or,
-    Xor,
+    Xor
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -87,7 +75,7 @@ pub enum MonkeyCExprBinaryOperation {
     GreaterThan,
     GreaterThanEquals,
     Equals,
-    NotEquals,
+    NotEquals
 }
 
 #[derive(Debug, PartialEq, Clone)]

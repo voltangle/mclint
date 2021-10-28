@@ -4,15 +4,15 @@ mod parser;
 mod tests;
 
 use crate::lexer::MonkeyCLexer;
-use crate::parser::MonkeyCParser;
 use anyhow::Context;
 use anyhow::Result;
 use clap::{App, Arg};
-use colored::Colorize;
 use std::fs;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use crate::parser::MonkeyCParser;
+use std::fs::File;
+use std::io::{BufReader, BufRead};
+use colored::Colorize;
 
 fn main() -> Result<()> {
     let matches = App::new("MCLint")
@@ -32,9 +32,7 @@ fn main() -> Result<()> {
         .with_context(|| format!("Failed to read contents of {}", file_path.display()))?;
 
     let mut lexer = MonkeyCLexer::new(file_contents.chars().collect());
-    let tokens = lexer
-        .lex()
-        .with_context(|| format!("Failed to tokenize {:?}", file_path.clone()))?;
+    let tokens = lexer.lex().with_context(|| format!("Failed to tokenize {:?}", file_path.clone()))?;
 
     let mut parser = MonkeyCParser::new(tokens, file_path.clone());
     match parser.parse() {
@@ -43,11 +41,7 @@ fn main() -> Result<()> {
         }
         Err(errors) => {
             for error in errors {
-                println!(
-                    "{} {}",
-                    "|".bright_red(),
-                    error.full_msg.as_str().bright_red()
-                );
+                println!("{} {}", "|".bright_red(), error.full_msg.as_str().bright_red());
 
                 // Getting a line specified inside of error struct
                 let file = File::open(file_path.clone()).unwrap();
@@ -91,3 +85,4 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+

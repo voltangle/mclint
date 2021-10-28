@@ -1,8 +1,8 @@
 use crate::lexer::tokens::{Token, TokenKind};
-use crate::parser::ast::{MonkeyCExpression, MonkeyCStatement};
+use crate::parser::ast::{MonkeyCStatement, MonkeyCExpression};
 use crate::parser::err::MCParseError;
-use std::path::PathBuf;
 use std::process;
+use std::path::PathBuf;
 
 pub mod ast;
 mod err;
@@ -113,7 +113,7 @@ impl MonkeyCParser {
         Self {
             token_list,
             file_path,
-            currently_at: 0,
+            currently_at: 0
         }
     }
 
@@ -121,7 +121,6 @@ impl MonkeyCParser {
     /// `BoolLiteral`, `StringLiteral`, `IntLiteral`,
     /// `LongLiteral`, `FloatLiteral`, `DoubleLiteral`,
     /// `Null`, or `CharLiteral`.
-
     fn is_kind_a_type(k: TokenKind) -> bool {
         if k == TokenKind::BoolLiteral
             || k == TokenKind::CharLiteral
@@ -281,13 +280,22 @@ impl MonkeyCParser {
                                     environ.next_expected = vec![TokenKind::Semicolon]
                                 }
                             }
+                            _ => {
+                                let t = self.current_token();
+                                errors.push(MCParseError {
+                                    at: (t.row, t.column),
+                                    literal_len: t.literal.len(),
+                                    full_msg: syntax_expect_fmt!(self.file_path.clone().into_os_string().to_str().unwrap(), "an '=' or 'as' token", t),
+                                    msg: syntax_expect_fmt_headl!("an '=' or 'as' token", t)
+                                });
+                            }
                         }
                     }
                     let statement = MonkeyCStatement::VariableDeclaration {
                         name,
                         default_val,
                         var_type,
-                        is_const: false,
+                        is_const: false
                     };
                     statements.push(statement);
                     self.currently_at += 1;

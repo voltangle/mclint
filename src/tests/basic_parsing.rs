@@ -1,9 +1,9 @@
 use crate::lexer::MonkeyCLexer;
-use crate::parser::ast::MonkeyCExpression;
-use crate::parser::ast::MonkeyCStatement::VariableDeclaration;
 use crate::parser::MonkeyCParser;
 use anyhow::Context;
 use anyhow::Result;
+use crate::parser::ast::MonkeyCStatement::VariableDeclaration;
+use crate::parser::ast::MonkeyCExpression;
 use std::path::PathBuf;
 
 #[test]
